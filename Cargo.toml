@@ -1,0 +1,14 @@
+[package]
+name = "hora"
+version = "0.0.1"
+authors = ["aljun <gagasalamer@outlook.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+real_hora = { package = "hora", path = "../hora"}
+jni = "0.19.0"
