@@ -11,6 +11,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+#[macro_use]
+extern crate lazy_static;
+
 trait ANNIndex:
     real_hora::core::ann_index::ANNIndex<f32, usize>
     + real_hora::core::ann_index::SerializableIndex<f32, usize>
@@ -28,22 +31,13 @@ pub fn metrics_transform(s: &str) -> real_hora::core::metrics::Metric {
     }
 }
 
-static mut ANNIndexManager: Option<
-    HashMap<String, Box<real_hora::core::ann_index::ANNIndex<f32, usize>>>,
-> = None;
-
-#[no_mangle]
-pub extern "system" fn Java_ANNIndexManager_init(env: JNIEnv, class: JClass) {
-    unsafe {
-        ANNIndexManager = Some(HashMap::<
-            String,
-            Box<real_hora::core::ann_index::ANNIndex<f32, usize>>,
-        >::new());
-    }
+lazy_static! {
+    static ref ANN_INDEX_MANAGER: Mutex<HashMap<String, Box<dyn real_hora::core::ann_index::ANNIndex<f32, usize>>>> =
+        Mutex::new(HashMap::new());
 }
 
 #[no_mangle]
-pub extern "system" fn Java_ANNIndexManager_new_1bf_1index(
+pub extern "system" fn Java_com_hora_app_ANNIndex_new_1bf_1index(
     env: JNIEnv,
     class: JClass,
     name: JString,
@@ -51,27 +45,21 @@ pub extern "system" fn Java_ANNIndexManager_new_1bf_1index(
 ) {
     let idx_name: String = env.get_string(name).unwrap().into();
     let idx_dimension = dimension as usize;
-    unsafe {
-        match &mut ANNIndexManager {
-            Some(ann) => {
-                &ann.insert(
-                    idx_name,
-                    Box::new(real_hora::index::bruteforce_idx::BruteForceIndex::<
-                        f32,
-                        usize,
-                    >::new(
-                        idx_dimension,
-                        &real_hora::index::bruteforce_params::BruteForceParams::default(),
-                    )),
-                );
-            }
-            None => {}
-        }
-    }
+
+    ANN_INDEX_MANAGER.lock().unwrap().insert(
+        idx_name,
+        Box::new(real_hora::index::bruteforce_idx::BruteForceIndex::<
+            f32,
+            usize,
+        >::new(
+            idx_dimension,
+            &real_hora::index::bruteforce_params::BruteForceParams::default(),
+        )),
+    );
 }
 
 #[no_mangle]
-pub extern "system" fn Java_ANNIndexManager_add(
+pub extern "system" fn Java_com_hora_app_ANNIndex_add(
     env: JNIEnv,
     class: JClass,
     name: JString,
@@ -84,22 +72,17 @@ pub extern "system" fn Java_ANNIndexManager_add(
     let mut buf: Vec<jfloat> = vec![0.0; length];
     env.get_float_array_region(features, 0, &mut buf).unwrap();
 
-    unsafe {
-        match &mut ANNIndexManager {
-            Some(ann) => match ann.get_mut(&idx_name) {
-                Some(index) => {
-                    let n = real_hora::core::node::Node::new_with_idx(&buf, idx);
-                    index.add_node(&n);
-                }
-                None => {}
-            },
-            None => {}
+    match &mut ANN_INDEX_MANAGER.lock().unwrap().get_mut(&idx_name) {
+        Some(index) => {
+            let n = real_hora::core::node::Node::new_with_idx(&buf, idx);
+            index.add_node(&n);
         }
+        None => {}
     }
 }
 
 #[no_mangle]
-pub extern "system" fn Java_ANNIndexManager_build(
+pub extern "system" fn Java_com_hora_app_ANNIndex_build(
     env: JNIEnv,
     class: JClass,
     name: JString,
@@ -108,21 +91,16 @@ pub extern "system" fn Java_ANNIndexManager_build(
     let idx_name: String = env.get_string(name).unwrap().into();
     let metric: String = env.get_string(mt).unwrap().into();
 
-    unsafe {
-        match &mut ANNIndexManager {
-            Some(ann) => match ann.get_mut(&idx_name) {
-                Some(index) => {
-                    index.build(metrics_transform(&metric));
-                }
-                None => {}
-            },
-            None => {}
+    match &mut ANN_INDEX_MANAGER.lock().unwrap().get_mut(&idx_name) {
+        Some(index) => {
+            index.build(metrics_transform(&metric));
         }
+        None => {}
     }
 }
 
 #[no_mangle]
-pub extern "system" fn Java_ANNIndexManager_search(
+pub extern "system" fn Java_com_hora_app_ANNIndex_search(
     env: JNIEnv,
     class: JClass,
     name: JString,
@@ -136,16 +114,11 @@ pub extern "system" fn Java_ANNIndexManager_search(
     let topk = k as usize;
     let mut result: Vec<i32> = Vec::new();
 
-    unsafe {
-        match &mut ANNIndexManager {
-            Some(ann) => match ann.get_mut(&idx_name) {
-                Some(index) => {
-                    result = index.search(&buf, topk).iter().map(|x| *x as i32).collect();
-                }
-                None => {}
-            },
-            None => {}
+    match ANN_INDEX_MANAGER.lock().unwrap().get(&idx_name) {
+        Some(index) => {
+            result = index.search(&buf, topk).iter().map(|x| *x as i32).collect();
         }
+        None => {}
     }
 
     let output = env.new_int_array(result.len() as i32).unwrap();
