@@ -26,3 +26,5 @@ hs_err_pid*
 # Added by cargo
 
 /target
+hora/target
+Cargo.lock
