@@ -1,7 +1,6 @@
 package com.hora.app;
 
-public class ANNIndex
-{
+public class ANNIndex {
     public static native void new_bf_index(String name, int dimension);
 
     public static native void add(String name, float[] features, int features_idx);

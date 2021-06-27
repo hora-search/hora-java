@@ -1,13 +1,9 @@
 use jni::JNIEnv;
 
-use jni::objects::{AutoArray, JClass, JList, JObject, JString};
+use jni::objects::{JClass, JString};
 
-use jni::objects::ReleaseMode;
-use jni::sys::{
-    jarray, jbyteArray, jdouble, jdoubleArray, jfloat, jfloatArray, jint, jintArray, jstring,
-};
-use real_hora;
-use std::cell::RefCell;
+use jni::sys::{jfloat, jfloatArray, jint, jintArray};
+
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -39,7 +35,7 @@ lazy_static! {
 #[no_mangle]
 pub extern "system" fn Java_com_hora_app_ANNIndex_new_1bf_1index(
     env: JNIEnv,
-    class: JClass,
+    _class: JClass,
     name: JString,
     dimension: jint,
 ) {
@@ -61,7 +57,7 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_new_1bf_1index(
 #[no_mangle]
 pub extern "system" fn Java_com_hora_app_ANNIndex_add(
     env: JNIEnv,
-    class: JClass,
+    _class: JClass,
     name: JString,
     features: jfloatArray,
     features_idx: jint,
@@ -75,7 +71,7 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_add(
     match &mut ANN_INDEX_MANAGER.lock().unwrap().get_mut(&idx_name) {
         Some(index) => {
             let n = real_hora::core::node::Node::new_with_idx(&buf, idx);
-            index.add_node(&n);
+            index.add_node(&n).unwrap();
         }
         None => {}
     }
@@ -84,7 +80,7 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_add(
 #[no_mangle]
 pub extern "system" fn Java_com_hora_app_ANNIndex_build(
     env: JNIEnv,
-    class: JClass,
+    _class: JClass,
     name: JString,
     mt: JString,
 ) {
@@ -93,7 +89,7 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_build(
 
     match &mut ANN_INDEX_MANAGER.lock().unwrap().get_mut(&idx_name) {
         Some(index) => {
-            index.build(metrics_transform(&metric));
+            index.build(metrics_transform(&metric)).unwrap();
         }
         None => {}
     }
@@ -102,7 +98,7 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_build(
 #[no_mangle]
 pub extern "system" fn Java_com_hora_app_ANNIndex_search(
     env: JNIEnv,
-    class: JClass,
+    _class: JClass,
     name: JString,
     k: jint,
     features: jfloatArray,
@@ -114,11 +110,8 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_search(
     let topk = k as usize;
     let mut result: Vec<i32> = Vec::new();
 
-    match ANN_INDEX_MANAGER.lock().unwrap().get(&idx_name) {
-        Some(index) => {
-            result = index.search(&buf, topk).iter().map(|x| *x as i32).collect();
-        }
-        None => {}
+    if let Some(index) = ANN_INDEX_MANAGER.lock().unwrap().get(&idx_name) {
+        result = index.search(&buf, topk).iter().map(|x| *x as i32).collect();
     }
 
     let output = env.new_int_array(result.len() as i32).unwrap();
