@@ -9,14 +9,6 @@ extern "C" {
 #endif
 /*
  * Class:     com_hora_app_ANNIndex
- * Method:    init
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_com_hora_app_ANNIndex_init
-  (JNIEnv *, jclass);
-
-/*
- * Class:     com_hora_app_ANNIndex
  * Method:    new_bf_index
  * Signature: (Ljava/lang/String;I)V
  */
@@ -46,6 +38,22 @@ JNIEXPORT void JNICALL Java_com_hora_app_ANNIndex_build
  */
 JNIEXPORT jintArray JNICALL Java_com_hora_app_ANNIndex_search
   (JNIEnv *, jclass, jstring, jint, jfloatArray);
+
+/*
+ * Class:     com_hora_app_ANNIndex
+ * Method:    load
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_hora_app_ANNIndex_load
+  (JNIEnv *, jclass, jstring, jstring);
+
+/*
+ * Class:     com_hora_app_ANNIndex
+ * Method:    dump
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_com_hora_app_ANNIndex_dump
+  (JNIEnv *, jclass, jstring, jstring);
 
 #ifdef __cplusplus
 }

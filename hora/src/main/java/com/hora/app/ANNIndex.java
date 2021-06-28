@@ -9,6 +9,10 @@ public class ANNIndex {
 
     public static native int[] search(String name, int k, float[] features);
 
+    public static native void load(String name, String file_path);
+
+    public static native void dump(String name, String file_path);
+
     static {
         System.loadLibrary("hora");
     }

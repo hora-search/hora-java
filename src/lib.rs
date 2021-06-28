@@ -4,17 +4,20 @@ use jni::objects::{JClass, JString};
 
 use jni::sys::{jfloat, jfloatArray, jint, jintArray};
 
+use real_hora::core::ann_index::SerializableIndex;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
 #[macro_use]
 extern crate lazy_static;
 
-trait ANNIndex:
+trait ANNIndexer:
     real_hora::core::ann_index::ANNIndex<f32, usize>
     + real_hora::core::ann_index::SerializableIndex<f32, usize>
 {
 }
+
+impl ANNIndexer for real_hora::index::bruteforce_idx::BruteForceIndex<f32, usize> {}
 
 pub fn metrics_transform(s: &str) -> real_hora::core::metrics::Metric {
     match s {
@@ -28,7 +31,7 @@ pub fn metrics_transform(s: &str) -> real_hora::core::metrics::Metric {
 }
 
 lazy_static! {
-    static ref ANN_INDEX_MANAGER: Mutex<HashMap<String, Box<dyn real_hora::core::ann_index::ANNIndex<f32, usize>>>> =
+    static ref ANN_INDEX_MANAGER: Mutex<HashMap<String, Box<dyn ANNIndexer>>> =
         Mutex::new(HashMap::new());
 }
 
@@ -117,4 +120,42 @@ pub extern "system" fn Java_com_hora_app_ANNIndex_search(
     let output = env.new_int_array(result.len() as i32).unwrap();
     env.set_int_array_region(output, 0, &result).unwrap();
     output
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hora_app_ANNIndex_load(
+    env: JNIEnv,
+    _class: JClass,
+    name: JString,
+    _file_path: JString,
+) {
+    let idx_name: String = env.get_string(name).unwrap().into();
+    let file_path: String = env.get_string(name).unwrap().into();
+    ANN_INDEX_MANAGER.lock().unwrap().insert(
+        idx_name,
+        Box::new(
+            real_hora::index::bruteforce_idx::BruteForceIndex::<f32, usize>::load(
+                &file_path,
+                &real_hora::core::arguments::Args::new(),
+            )
+            .unwrap(),
+        ),
+    );
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_hora_app_ANNIndex_dump(
+    env: JNIEnv,
+    _class: JClass,
+    name: JString,
+    _file_path: JString,
+) {
+    let idx_name: String = env.get_string(name).unwrap().into();
+    let file_path: String = env.get_string(name).unwrap().into();
+
+    if let Some(index) = ANN_INDEX_MANAGER.lock().unwrap().get_mut(&idx_name) {
+        index
+            .dump(&file_path, &real_hora::core::arguments::Args::new())
+            .unwrap();
+    }
 }
