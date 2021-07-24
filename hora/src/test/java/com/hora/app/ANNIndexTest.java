@@ -77,16 +77,15 @@ public class ANNIndexTest {
                 for (int j = 0; j < dimension; j++) {
                     features[j] = getGaussian(fRandom, (float) (i * 10), variance);
                 }
-                bruteforce_idx.add("bf", features, i * 10 + p);
+                bruteforce_idx.add("bf", features, i * 10 + p); // add point
                 tmp.add(features);
             }
         }
-        bruteforce_idx.build("bf", "euclidean");
+        bruteforce_idx.build("bf", "euclidean"); // build index
 
         int search_index = fRandom.nextInt(tmp.size());
-        int[] result = bruteforce_idx.search("bf", 10, tmp.get(search_index));
-        log.info("demo bruteforce_idx" + Arrays.toString(result));
-
+        int[] result = bruteforce_idx.search("bf", 10, tmp.get(search_index)); // nearest neighbor search
+        log.info("demo bruteforce_idx" + Arrays.toString(result)); // [main] INFO com.hora.app.ANNIndexTest  - demo bruteforce_idx[7, 8, 0, 5, 3, 9, 1, 6, 4, 2]
     }
 
     private static float getGaussian(Random fRandom, float aMean, float variance) {
