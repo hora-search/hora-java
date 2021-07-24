@@ -68,7 +68,7 @@ public class ANNIndexTest {
         final float variance = 2.0f;
         Random fRandom = new Random();
 
-        BruteForceIndex bruteforce_idx = new BruteForceIndex(dimension);
+        BruteForceIndex bruteforce_idx = new BruteForceIndex(dimension); // init index instance
 
         List<float[]> tmp = new ArrayList<>();
         for (int i = 0; i < 5; i++) {

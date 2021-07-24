@@ -1,2 +1,5 @@
 # hora-java
-Java binding for Hora Approximate Nearest Neighbor Search Library
+
+still **Work-in-Progress**
+
+Java binding for [Hora Approximate Nearest Neighbor Search Library](https://github.com/hora-search/hora)
