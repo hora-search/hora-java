@@ -67,7 +67,6 @@ public class ANNIndexTest {
         final int dimension = 2;
         final float variance = 2.0f;
         Random fRandom = new Random();
-        // String index_name = "hello";
 
         BruteForceIndex bruteforce_idx = new BruteForceIndex(dimension);
 
@@ -78,14 +77,14 @@ public class ANNIndexTest {
                 for (int j = 0; j < dimension; j++) {
                     features[j] = getGaussian(fRandom, (float) (i * 10), variance);
                 }
-                bruteforce_idx.add("demo", features, i * 10 + p);
+                bruteforce_idx.add("bf", features, i * 10 + p);
                 tmp.add(features);
             }
         }
-        bruteforce_idx.build("demo", "euclidean");
+        bruteforce_idx.build("bf", "euclidean");
 
         int search_index = fRandom.nextInt(tmp.size());
-        int[] result = bruteforce_idx.search("demo", 10, tmp.get(search_index));
+        int[] result = bruteforce_idx.search("bf", 10, tmp.get(search_index));
         log.info("demo bruteforce_idx" + Arrays.toString(result));
 
     }
