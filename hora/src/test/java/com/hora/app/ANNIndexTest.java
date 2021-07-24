@@ -59,8 +59,35 @@ public class ANNIndexTest {
             int[] result = idx.search(index_name, 10, tmp.get(search_index));
             log.info("hahah" + Arrays.toString(result));
         }
-
+        demo();
         assertTrue(true);
+    }
+
+    public void demo() {
+        final int dimension = 2;
+        final float variance = 2.0f;
+        Random fRandom = new Random();
+        // String index_name = "hello";
+
+        BruteForceIndex bruteforce_idx = new BruteForceIndex(dimension);
+
+        List<float[]> tmp = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            for (int p = 0; p < 10; p++) {
+                float[] features = new float[dimension];
+                for (int j = 0; j < dimension; j++) {
+                    features[j] = getGaussian(fRandom, (float) (i * 10), variance);
+                }
+                bruteforce_idx.add("demo", features, i * 10 + p);
+                tmp.add(features);
+            }
+        }
+        bruteforce_idx.build("demo", "euclidean");
+
+        int search_index = fRandom.nextInt(tmp.size());
+        int[] result = bruteforce_idx.search("demo", 10, tmp.get(search_index));
+        log.info("demo bruteforce_idx" + Arrays.toString(result));
+
     }
 
     private static float getGaussian(Random fRandom, float aMean, float variance) {
